@@ -1,6 +1,6 @@
 'use client'
 
-import { RegisterPage } from "../register"
+import { RegisterPage } from "../components/register"
 
 
 
@@ -8,6 +8,5 @@ import { RegisterPage } from "../register"
 
 
 export default function Register() {
-
    return <RegisterPage />
 }

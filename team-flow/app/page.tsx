@@ -12,7 +12,7 @@ export default function LoginPage() {
             <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary">
               <Layers3 className="w-6 h-6 text-primary-foreground" />
             </div>
-            <span className="text-2xl font-semibold text-foreground">Teamflow</span>
+            <a href="/" className="text-2xl font-semibold text-foreground">Teamflow</a>
           </div>
 
           {/* Login */}
@@ -31,7 +31,7 @@ export default function LoginPage() {
           <div className="text-center text-sm text-muted-foreground">
             <p>
               {"Don't have an account? "}
-              <a href="/components/registerPage" className="text-primary hover:underline font-medium">
+              <a href="/registerPage" className="text-primary hover:underline font-medium">
                 Sign up
               </a>
             </p>

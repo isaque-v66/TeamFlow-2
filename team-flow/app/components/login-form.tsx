@@ -12,11 +12,12 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from "@hookform/resolvers/zod"
 import z from 'zod'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useRouter } from "next/navigation"
 
 
 const dataForm = z.object({
-    email: z.string(),
-    password: z.string()
+    email: z.email('Email inválido'),
+    password: z.string().min(5, 'A senha deve ter no mínimo 5 caracteres').max(50)
 })
 
 
@@ -30,42 +31,45 @@ export function LoginForm() {
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
+  const router = useRouter()
   const {register, handleSubmit, formState:{errors}, reset} = useForm<SchemaDataForm>({
     resolver: zodResolver(dataForm)
   })
 
   const useHandleSubmit = async (data: SchemaDataForm) => {
 
-    setLoading(true)
-    try {        
-        const response = await fetch('/api/register', {
-            method: 'POST',
-            headers: {'Content-type': 'application/json'},
+      try {
+        const response = await fetch('/api/login', {
+            method: "POST",
+            headers: {"Content-Type": "Application/json"},
             body: JSON.stringify({
                 email: data.email,
                 password: data.password
             })
         })
 
-        if(!response.ok) {
-           const errorData = await response.json()
-           console.error("Erro na requisição:", errorData)
-           return 
+        const result = await response.json()
+
+        if(response.ok && result.success) {
+           localStorage.setItem('user', JSON.stringify(result.user))
+
+           router.push("/dashboardPage")
+
+           return
+
+        } else {
+            console.log('Erro no login:', result.error)
+            alert(result.error || 'Credenciais inválidas')
         }
 
-        const result = await response.json()
-        console.log('registro atualizado com sucesso!', result)
 
-       reset()
+      } catch(err) {
+        console.log('Usuário não encontrado')
+        return
 
-    } catch (err) {
-        console.log(err)
-        return err
-    } finally {
-        setLoading(false)
-    }
+      }
 
-  }
+  } 
 
 
 
@@ -90,6 +94,7 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit(useHandleSubmit)} className="space-y-4">
       <div className="space-y-2">
+        {errors.email && (<p className="text-red-500 text-sm">{errors.email.message}</p>)}
         <Label htmlFor="email">Endereço de Email</Label>
         <Input
           id="email"
@@ -104,6 +109,7 @@ export function LoginForm() {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label htmlFor="password">Senha</Label>
+           {errors.password && (<p className="text-red-500 text-sm">{errors.password.message}</p>)}
           <a href="#" className="text-sm text-primary hover:underline">
             Esqueceu a senha?
           </a>

@@ -27,8 +27,6 @@ type SchemaDataForm = z.infer<typeof dataForm>
 
 
 export function LoginForm() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
   const router = useRouter()
@@ -37,6 +35,8 @@ export function LoginForm() {
   })
 
   const useHandleSubmit = async (data: SchemaDataForm) => {
+
+    setLoading(true)
 
       try {
         const response = await fetch('/api/login', {
@@ -67,6 +67,8 @@ export function LoginForm() {
         console.log('Usuário não encontrado')
         return
 
+      } finally {
+        setLoading(false)
       }
 
   } 

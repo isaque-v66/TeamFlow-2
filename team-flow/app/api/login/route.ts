@@ -1,6 +1,5 @@
 import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
-import { success } from "zod";
 import bcrypt from "bcryptjs";
 
 
@@ -35,7 +34,7 @@ export async function POST(req: Request) {
             return NextResponse.json({success: false, error: "Senha incorreta"}, {status: 401})
         }
 
-       // emove a senha (hash) do objeto antes de retornar por segurança
+       // emove a senha (hash) do objeto antes de retornar
         const { password: _, ...userWithoutPassword } = user;
 
 

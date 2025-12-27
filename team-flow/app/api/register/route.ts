@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   try {
     const { email, password } = await req.json()
 
-    // 1. Verificar se usuário já existe
+   
     const existingUser = await prisma.user.findUnique({
       where: { email: email }
     })
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
       }
     })
 
-    // Remover a senha (hash) da resposta por segurança
+    // Remover o hash da resposta por segurança
     const { password: _, ...userWithoutPassword } = newUser
 
     return NextResponse.json(

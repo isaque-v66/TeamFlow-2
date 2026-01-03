@@ -22,13 +22,15 @@ export async function POST(req: Request) {
                 assignedTo: assignedTo,
                 status: status,
                 deadline: deadline ? new Date(deadline) : null,
-                userId: userId
+                userId: userId,
+    
+                
                
             }
         })
         
         
-        return NextResponse.json({success: true, response})
+        return NextResponse.json(response)
 
 
     } catch (err) {

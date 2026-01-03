@@ -17,13 +17,7 @@ import z from "zod"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 
-// Mock só para exemplo
-// const teamMembers = [
-//   { id: "1", name: "Sarah Johnson" },
-//   { id: "2", name: "Mike Chen" },
-//   { id: "3", name: "Emma Davis" },
-//   { id: "4", name: "Alex Rodriguez" },
-// ]
+
 
 
 
@@ -47,7 +41,13 @@ const TaskSchema = z.object({
   assignedTo: z.string().optional(),
   deadline: z.string().optional(),
   priority: z.enum(["low", "medium", "high"]),
-  
+  comments: z.array(
+    z.object({
+      author: z.string(),
+      text: z.string(),
+      date: z.string()
+    })
+  )
 })
 
 type TaskSchemaType = z.infer<typeof TaskSchema>
@@ -79,7 +79,7 @@ export default function DashboardPage() {
   const [tasks, setTasks] = useState<TaskSchemaType[]>([])
   const [user, setUser] = useState<LoggedUser | null>(null)
   const [teamMembers, setTeamMembers] = useState<Members[]>([])
-  const { register, handleSubmit, control, formState: { errors, isSubmitting }, reset} = useForm<TaskFormData>({
+  const { register, handleSubmit, control} = useForm<TaskFormData>({
         resolver: zodResolver(TaskFormSchema), defaultValues: { priority: "medium" }
   })
 
@@ -156,8 +156,10 @@ export default function DashboardPage() {
 
         console.log('tarefa criada com sucesso!')
 
-        const filteredData = await response.json()
-        setTasks((prev) => [...prev, filteredData.response])
+        const newTask = await response.json()
+
+        setTasks(prev => [{...newTask, comments: newTask.comments ?? [] },...prev])
+
 
     } catch(e) {
         console.log(e)
@@ -168,6 +170,44 @@ export default function DashboardPage() {
   }
 
 
+
+
+
+
+
+  // FUNÇÃO PARA LISTAR AS TASKS NA TABELA
+  useEffect(()=>{
+
+     async function fetchTasks(){
+
+      try {
+
+        const response = await fetch('/api/getTask')
+
+        if(!response.ok){
+          return
+        }
+   
+        const data: TaskSchemaType[] = await response.json()
+
+          const normalized = data.map(task => ({
+          ...task,
+          comments: task.comments ?? []
+          }))
+
+        setTasks(normalized)
+
+      } catch(err){
+        console.log("Erro ao encontrar tasks", err)
+
+      }
+
+    }
+
+
+    fetchTasks()
+
+  }, [])
 
 
 
@@ -197,26 +237,6 @@ const handleAssignTask = (taskId: string, memberId: string) => {
 
 
 
-  // const handleAddComment = (taskId: string, comment: string) => {
-  //   if (!comment.trim()) return
-  //   setTasks(
-  //     tasks.map((task) =>
-  //       task.id === taskId
-  //         ? {
-  //             ...task,
-  //             comments: [
-  //               ...task.comments,
-  //               {
-  //                 author: "Current User",
-  //                 text: comment,
-  //                 date: new Date().toISOString().split("T")[0],
-  //               },
-  //             ],
-  //           }
-  //         : task,
-  //     ),
-  //   )
-  // }
 
 
 
@@ -599,10 +619,10 @@ const handleAssignTask = (taskId: string, memberId: string) => {
                         <div className="space-y-3">
                           <div className="flex items-center gap-2 text-sm font-medium">
                             <MessageSquare className="w-4 h-4" />
-                            {/* Comentários ({task.comments.length}) */}
+                            Comentários ({task.comments.length})
                           </div>
 
-                          {/* {task.comments.length > 0 && (
+                          {task.comments.length > 0 && (
                             <div className="space-y-2">
                               {task.comments.map((comment, idx) => (
                                 <div key={idx} className="rounded-lg bg-muted p-3 space-y-1">
@@ -615,15 +635,10 @@ const handleAssignTask = (taskId: string, memberId: string) => {
                                 </div>
                               ))}
                             </div>
-                          )} */}
+                          )}
 
                           <form
-                            // onSubmit={(e) => {
-                            //   e.preventDefault()
-                            //   const input = e.currentTarget.elements.namedItem("comment") as HTMLInputElement
-                            //   handleAddComment(task.id, input.value)
-                            //   input.value = ""
-                            // }}
+                         
                             className="flex gap-2"
                           >
                             <Input name="comment" placeholder="Add a comment..." className="flex-1" />

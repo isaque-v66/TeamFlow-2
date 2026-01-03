@@ -18,12 +18,12 @@ import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 
 // Mock só para exemplo
-const teamMembers = [
-  { id: "1", name: "Sarah Johnson" },
-  { id: "2", name: "Mike Chen" },
-  { id: "3", name: "Emma Davis" },
-  { id: "4", name: "Alex Rodriguez" },
-]
+// const teamMembers = [
+//   { id: "1", name: "Sarah Johnson" },
+//   { id: "2", name: "Mike Chen" },
+//   { id: "3", name: "Emma Davis" },
+//   { id: "4", name: "Alex Rodriguez" },
+// ]
 
 
 
@@ -47,13 +47,7 @@ const TaskSchema = z.object({
   assignedTo: z.string().optional(),
   deadline: z.string().optional(),
   priority: z.enum(["low", "medium", "high"]),
-  comments: z.array(
-    z.object({
-      author: z.string(),
-      text: z.string(),
-      date: z.string()
-    })
-  )
+  
 })
 
 type TaskSchemaType = z.infer<typeof TaskSchema>
@@ -68,6 +62,10 @@ type LoggedUser = {
 
 
 
+type Members = {
+  id: string,
+  email: string
+}
 
 
 
@@ -80,6 +78,7 @@ export default function DashboardPage() {
    const [activeTab, setActiveTab] = useState("create")
   const [tasks, setTasks] = useState<TaskSchemaType[]>([])
   const [user, setUser] = useState<LoggedUser | null>(null)
+  const [teamMembers, setTeamMembers] = useState<Members[]>([])
   const { register, handleSubmit, control, formState: { errors, isSubmitting }, reset} = useForm<TaskFormData>({
         resolver: zodResolver(TaskFormSchema), defaultValues: { priority: "medium" }
   })
@@ -99,25 +98,71 @@ export default function DashboardPage() {
 
 
 
+  
 
 
 
-  // STATE PARA NOVA TAREFA
-  const [newTask, setNewTask] = useState({
-    title: "",
-    description: "",
-    priority: "medium" as const,
-    assignedTo: "",
-    deadline: "",
-  })
+
+  //FUNÇÃO PARA BUSCAR OS MEMBROS DA EQUIPE
+  useEffect(() => {
+  async function fetchMembers() {
+    try {
+      const response = await fetch("/api/getMembers")
+
+      if (!response.ok) return
+
+      const data: Members[] = await response.json()
+      setTeamMembers(data)
+    } catch (err) {
+      console.error("Erro ao buscar membros", err)
+    }
+  }
+
+  fetchMembers()
+}, [])
+
+
+
+
+
+
+
 
 
 
 
   // FUNÇÃO PARA CRIAR TAREFAS
-  const handleCreateTask = (e: any) => {
+  const handleCreateTask = async (data: TaskFormData)=> {
     
-    console.log(e)
+    try {
+
+        const response = await fetch('/api/createTask', {
+            method: 'POST',
+            headers: {'Content-type': 'application/json'},
+            body: JSON.stringify({
+                title: data.title,
+                description: data.description,
+                priority: data.priority,
+                assignedTo: data.assignedTo,
+                deadline: data.deadline
+            })
+        })
+
+
+        if(!response.ok) {
+            console.log("Erro ao se comunicar com a API")
+            return
+        }
+
+        console.log('tarefa criada com sucesso!')
+
+        const filteredData = await response.json()
+        setTasks((prev) => [...prev, filteredData.response])
+
+    } catch(e) {
+        console.log(e)
+        return
+    }
 
     
   }
@@ -132,13 +177,17 @@ export default function DashboardPage() {
 
 
 
-  const handleAssignTask = (taskId: string, memberId: string) => {
-    setTasks(
-      tasks.map((task) =>
-        task.id === taskId ? { ...task, assignedTo: teamMembers.find((m) => m.id === memberId)?.name } : task,
-      ),
+const handleAssignTask = (taskId: string, memberId: string) => {
+  const member = teamMembers.find((m) => m.id === memberId)
+
+  if (!member) return
+
+  setTasks(
+    tasks.map((task) =>
+      task.id === taskId ? { ...task, assignedTo: member.email } : task
     )
-  }
+  )
+}
 
 
 
@@ -147,26 +196,27 @@ export default function DashboardPage() {
 
 
 
-  const handleAddComment = (taskId: string, comment: string) => {
-    if (!comment.trim()) return
-    setTasks(
-      tasks.map((task) =>
-        task.id === taskId
-          ? {
-              ...task,
-              comments: [
-                ...task.comments,
-                {
-                  author: "Current User",
-                  text: comment,
-                  date: new Date().toISOString().split("T")[0],
-                },
-              ],
-            }
-          : task,
-      ),
-    )
-  }
+
+  // const handleAddComment = (taskId: string, comment: string) => {
+  //   if (!comment.trim()) return
+  //   setTasks(
+  //     tasks.map((task) =>
+  //       task.id === taskId
+  //         ? {
+  //             ...task,
+  //             comments: [
+  //               ...task.comments,
+  //               {
+  //                 author: "Current User",
+  //                 text: comment,
+  //                 date: new Date().toISOString().split("T")[0],
+  //               },
+  //             ],
+  //           }
+  //         : task,
+  //     ),
+  //   )
+  // }
 
 
 
@@ -334,8 +384,8 @@ export default function DashboardPage() {
                         </SelectTrigger>
                         <SelectContent>
                             {teamMembers.map((member) => (
-                            <SelectItem key={member.id} value={member.id}>
-                                {member.name}
+                            <SelectItem key={member.id} value={member.email}>
+                                {member.email}
                             </SelectItem>
                             ))}
                         </SelectContent>
@@ -412,7 +462,7 @@ export default function DashboardPage() {
                             <TableCell>{getPriorityBadge(task.priority)}</TableCell>
                             <TableCell>
                               <Select
-                                value={teamMembers.find((m) => m.name === task.assignedTo)?.id || ""}
+                                value={teamMembers.find((m) => m.email === task.assignedTo)?.id || ""}
                                 onValueChange={(value) => handleAssignTask(task.id, value)}
                               >
                                 <SelectTrigger className="w-40">
@@ -421,7 +471,7 @@ export default function DashboardPage() {
                                 <SelectContent>
                                   {teamMembers.map((member) => (
                                     <SelectItem key={member.id} value={member.id}>
-                                      {member.name}
+                                      {member.email}
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
@@ -549,10 +599,10 @@ export default function DashboardPage() {
                         <div className="space-y-3">
                           <div className="flex items-center gap-2 text-sm font-medium">
                             <MessageSquare className="w-4 h-4" />
-                            Comentários ({task.comments.length})
+                            {/* Comentários ({task.comments.length}) */}
                           </div>
 
-                          {task.comments.length > 0 && (
+                          {/* {task.comments.length > 0 && (
                             <div className="space-y-2">
                               {task.comments.map((comment, idx) => (
                                 <div key={idx} className="rounded-lg bg-muted p-3 space-y-1">
@@ -565,15 +615,15 @@ export default function DashboardPage() {
                                 </div>
                               ))}
                             </div>
-                          )}
+                          )} */}
 
                           <form
-                            onSubmit={(e) => {
-                              e.preventDefault()
-                              const input = e.currentTarget.elements.namedItem("comment") as HTMLInputElement
-                              handleAddComment(task.id, input.value)
-                              input.value = ""
-                            }}
+                            // onSubmit={(e) => {
+                            //   e.preventDefault()
+                            //   const input = e.currentTarget.elements.namedItem("comment") as HTMLInputElement
+                            //   handleAddComment(task.id, input.value)
+                            //   input.value = ""
+                            // }}
                             className="flex gap-2"
                           >
                             <Input name="comment" placeholder="Add a comment..." className="flex-1" />

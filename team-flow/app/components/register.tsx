@@ -54,9 +54,9 @@ export function RegisterPage() {
             console.log(" OK?", response.ok)
 
             if (!response.ok) {
-                const errorData = await response.json()
+                const errorData = await response.text()
                 console.error(" Erro na resposta da API:", errorData)
-                alert(`Erro: ${errorData.message || 'Erro desconhecido'}`)
+                alert(`Erro: Erro ao registrar usuário`)
                 return
             }
             

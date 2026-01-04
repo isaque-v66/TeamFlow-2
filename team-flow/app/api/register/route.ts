@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client"
 import { NextResponse } from "next/server"
 import bcrypt from "bcryptjs" 
+import { success } from "zod"
 
 const prisma = new PrismaClient()
 const saltRounds = 10
@@ -54,3 +55,20 @@ export async function POST(req: Request) {
     )
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -158,7 +158,7 @@ export default function DashboardPage() {
 
         const newTask = await response.json()
 
-        setTasks(prev => [{...newTask, comments: newTask.comments ?? [] },...prev])
+        setTasks(prev => [{...newTask, comments: newTask.comments ?? [] }, ...prev])
 
 
     } catch(e) {

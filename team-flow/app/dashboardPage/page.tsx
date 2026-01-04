@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useEffect, useState } from "react"
-import { Layers3, Plus, ListChecks, TrendingUp, Calendar, MessageSquare, User } from "lucide-react"
+import { Layers3, Plus, ListChecks, TrendingUp, Calendar, MessageSquare, User, TrashIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -169,6 +169,43 @@ export default function DashboardPage() {
     
   }
 
+
+
+
+
+
+
+  //FUNÇÃO PARA DELETAR
+  async function handleDelete(id: string){
+
+    try {
+
+      const response = await fetch('/api/deleteTask', {
+        method: "DELETE",
+        headers: {"Content-type": "application/json"},
+        body: JSON.stringify({id})
+      })
+
+      if(!response.ok) {
+        console.log("Erro ao fazer a requisição de exclusão")
+        return
+      }
+
+      setTasks(prev => prev.filter(task => task.id !== id))
+
+
+    } catch(err) {
+
+      console.log("Erro ao fazer a requisição de exclusão", err)
+      return
+
+    }
+
+
+
+
+
+  }
 
 
 
@@ -509,11 +546,19 @@ const handleAssignTask = (taskId: string, memberId: string) => {
                                 <span className="text-sm text-muted-foreground">Sem prazo</span>
                               )}
                             </TableCell>
+
                             <TableCell>
-                              <Button variant="outline" size="sm">
-                                Edição
-                              </Button>
+                              <div className="flex gap-2">
+                                <Button variant="outline" size="sm">
+                                  Edição
+                                </Button>
+
+                                <Button variant="outline" size="sm" onClick={()=> handleDelete(task.id)}>
+                                  <TrashIcon />
+                                </Button>
+                              </div>
                             </TableCell>
+
                           </TableRow>
                         ))}
                       </TableBody>

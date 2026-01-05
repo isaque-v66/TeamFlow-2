@@ -79,6 +79,7 @@ export default function DashboardPage() {
   const [tasks, setTasks] = useState<TaskSchemaType[]>([])
   const [user, setUser] = useState<LoggedUser | null>(null)
   const [teamMembers, setTeamMembers] = useState<Members[]>([])
+  const [taskToDelete, setTaskToDelete] = useState<TaskSchemaType | null>(null)
   const { register, handleSubmit, control} = useForm<TaskFormData>({
         resolver: zodResolver(TaskFormSchema), defaultValues: { priority: "medium" }
   })
@@ -176,37 +177,36 @@ export default function DashboardPage() {
 
 
   //FUNÇÃO PARA DELETAR
-  async function handleDelete(id: string){
+  async function confirmDelete() {
+  if (!taskToDelete) return
 
-    try {
+  try {
+    const response = await fetch("/api/deleteTask", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: taskToDelete.id }),
+    })
 
-      const response = await fetch('/api/deleteTask', {
-        method: "DELETE",
-        headers: {"Content-type": "application/json"},
-        body: JSON.stringify({id})
-      })
-
-      if(!response.ok) {
-        console.log("Erro ao fazer a requisição de exclusão")
-        return
-      }
-
-      setTasks(prev => prev.filter(task => task.id !== id))
-
-
-    } catch(err) {
-
-      console.log("Erro ao fazer a requisição de exclusão", err)
+    if (!response.ok) {
+      console.error("Erro ao excluir tarefa")
       return
-
     }
 
+    setTasks(prev =>
+      prev.filter(task => task.id !== taskToDelete.id)
+    )
 
-
-
-
+    setTaskToDelete(null)
+  } catch (err) {
+    console.error("Erro ao excluir tarefa", err)
   }
+}
 
+
+
+
+
+ 
 
 
 
@@ -553,7 +553,7 @@ const handleAssignTask = (taskId: string, memberId: string) => {
                                   Edição
                                 </Button>
 
-                                <Button variant="outline" size="sm" onClick={()=> handleDelete(task.id)}>
+                                <Button variant="outline" size="sm" onClick={()=> setTaskToDelete(task)}>
                                   <TrashIcon />
                                 </Button>
                               </div>
@@ -567,9 +567,40 @@ const handleAssignTask = (taskId: string, memberId: string) => {
                 </CardContent>
               </Card>
             </TabsContent>
+             
 
 
 
+
+          {taskToDelete && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <Card className="w-[400px]">
+              <CardHeader>
+                <CardTitle>Excluir tarefa</CardTitle>
+                <CardDescription>
+                  Tem certeza que deseja excluir a tarefa
+                  <strong> "{taskToDelete.title}"</strong>?
+                </CardDescription>
+              </CardHeader>
+
+              <CardContent className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setTaskToDelete(null)}
+                >
+                  Cancelar
+                </Button>
+
+                <Button
+                  variant="outline"
+                  onClick={() => confirmDelete()}
+                >
+                  Excluir
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+)}
 
 
 
